@@ -1,13 +1,15 @@
 [project]
-name = "my-logging-monitoring"
+name = "backend"
 version = "0.1.0"
 description = ""
 authors = [
     {name = "vlad-yarko",email = "vladyarik88888@gmail.com"}
 ]
-readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 dependencies = [
+    "fastapi (>=0.117.1,<0.118.0)",
+    "uvicorn (>=0.37.0,<0.38.0)",
+    "prometheus-client (>=0.23.1,<0.24.0)"
 ]
 
 

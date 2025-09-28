@@ -1,0 +1,38 @@
+ARG PYTHON_VERSION=3.11-slim
+
+
+###
+FROM python:${PYTHON_VERSION} AS base
+
+LABEL maintainer="vlad-yarko"
+LABEL org.opencontainers.image.source="https://github.com/vlad-yarko/my-logging-monitoring"
+LABEL org.opencontainers.image.description=Logging/Monitoring
+
+RUN useradd -m backend
+
+# Install curl, because slim does not have it
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
+
+RUN curl -sSL https://install.python-poetry.org | python3 -
+
+ENV PATH="/root/.local/bin:$PATH"
+ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+
+WORKDIR /app
+
+COPY --chown=backend pyproject.toml poetry.lock* ./
+
+
+###
+FROM base AS dev
+
+RUN poetry install --no-root
+
+COPY --chown=backend . .
+
+EXPOSE 8000
+
+# USER backend
+
+ENTRYPOINT [ "poetry", "run" ]
+CMD [ "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000" ]
