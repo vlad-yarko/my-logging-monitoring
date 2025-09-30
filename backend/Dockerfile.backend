@@ -16,7 +16,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certifi
 RUN curl -sSL https://install.python-poetry.org | python3 -
 
 ENV PATH="/root/.local/bin:$PATH"
-ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+# ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+ENV POETRY_VIRTUALENVS_IN_PROJECT=false
 
 WORKDIR /app
 
@@ -29,6 +30,10 @@ FROM base AS dev
 RUN poetry install --no-root
 
 COPY --chown=backend . .
+
+RUN poetry env activate
+
+# RUN poetry run python engine.py
 
 EXPOSE 8000
 

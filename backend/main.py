@@ -2,8 +2,10 @@ import logging
 import random
 import time
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from starlette.responses import Response
+from sqlalchemy import insert
+from pydantic import BaseModel
 
 from prometheus_client import (
     generate_latest,
@@ -17,6 +19,9 @@ from metrics import (
     REQUEST_LATENCY,
     IN_PROGRESS
 )
+from models import MyDBModel
+from engine import main_session
+
 
 # from metrics import (
 #     TOTAL_HTTP_REQUESTS_COUNT,
@@ -71,15 +76,7 @@ async def metrics_middleware(request: Request, call_next):
             status_code=status_code,
             app_name=APP_NAME,
             # method=method
-        ).inc()
-        
-        if status_code != str(200):
-            EXCEPTIONS.labels(
-                # path=path,
-                app_name=APP_NAME,
-                # method=method
-            ).inc()
-            
+        ).inc()            
         return response
 
     except Exception as e:
@@ -105,7 +102,6 @@ async def metrics_middleware(request: Request, call_next):
         ).dec()
 
 
-
 @app.get("/metrics")
 async def metrics():
     response = Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
@@ -117,25 +113,22 @@ async def root():
     return {"message": "ROOT"}
 
 
-@app.get("/status/{status_code}")
-async def status_hand(status_code: int):
-    if status_code != 200:
-        raise HTTPException(
-            detail=f"Error {status_code}",
-            status_code=status_code
-        )
-    return {"message": "OK"}
-
-
 @app.get("/random")
 async def random_hand(request: Request):
     number = random.randint(1, 5)
-    # RANDOM_ENDPOINT_NUMBERS_COUNTER.labels(
-    #     number=str(number),
-    #     method=request.method,
-    #     endpoint=request.url.path
-    # )
     return {"number": number}
+
+
+class DBSchema(BaseModel):
+    title: str
+
+
+@app.post('/db')
+async def db_hand(request: Request, body: DBSchema):
+    async with main_session() as session:
+        await session.execute(insert(MyDBModel).values(**body.model_dump()))
+        await session.commit()
+    return {"title": body.title}
 
 
 # @app.middleware("http")

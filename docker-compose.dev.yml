@@ -2,6 +2,33 @@ version: "3.9"
 
 
 services:
+  db:
+    image: postgres:15.1-alpine
+    container_name: db
+    volumes:
+      - my-logging-monitoring_db:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    env_file:
+      - .env
+    # environment:
+    #   POSTGRES_LOGGING_COLLECTOR: "off"   # disable file logging
+    # command: ["postgres", "-c", "logging_collector=off", "-c", "log_destination=stderr"]
+    logging:
+      driver: json-file
+      options:  
+        tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+
+  db-exporter:
+    image: prometheuscommunity/postgres-exporter
+    container_name: db-exporter
+    ports:
+      - "9187:9187"
+    depends_on:
+      - db
+    env_file:
+      - .env
+
   backend:
     build:
       context: ./backend
@@ -18,11 +45,15 @@ services:
         tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
     # Dev only
     volumes:
-      - type: volume
-        target: /app/.venv
+      # - type: volume
+      #   target: /app/.venv
       - type: bind
         source: ./backend
         target: /app
+    depends_on:
+      - db
+    env_file:
+      - .env
 
   promtail:
     image: grafana/promtail:latest
@@ -78,6 +109,7 @@ services:
 
 
 volumes:
+  my-logging-monitoring_db:
   grafanadata:
   prometheusdata:
   lokidata:
