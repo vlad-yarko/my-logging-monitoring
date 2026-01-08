@@ -1,0 +1,15 @@
+version: "3.9"
+
+
+services:
+
+  locust:
+    build:
+      context: ./locust-tests
+      dockerfile: Dockerfile.locust
+      args:
+        PYTHON_VERSION: "3.11-slim"
+      # target: dev
+    container_name: locust
+    ports:
+      - "8089:8089"

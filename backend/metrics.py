@@ -20,7 +20,7 @@ RESPONSES = Counter(
 EXCEPTIONS = Counter(
     "fastapi_exceptions_total",
     "Total number of HTTP exceptions",
-    ["app_name"]
+    ["app_name", "path"]
 )
 
 REQUEST_LATENCY = Histogram(
